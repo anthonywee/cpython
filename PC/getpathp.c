@@ -252,12 +252,15 @@ static void
 join(wchar_t *buffer, const wchar_t *stuff)
 {
     if (_PathCchCombineEx_Initialized == 0) {
-        HMODULE pathapi = LoadLibraryW(L"api-ms-win-core-path-l1-1-0.dll");
-        if (pathapi) {
-            _PathCchCombineEx = (PPathCchCombineEx)GetProcAddress(pathapi, "PathCchCombineEx");
-        }
-        else {
-            _PathCchCombineEx = NULL;
+        _PathCchCombineEx = NULL;
+        if (GetProcAddress(GetModuleHandleW(L"kernel32.dll"), "AddDllDirectory") != NULL) {
+            /* Check that we can use the LOAD_LIBRARY_SEARCH_SYSTEM32 flag below by ensuring
+               the AddDllDirectory method exists first */
+            HMODULE pathapi = LoadLibraryExW(L"api-ms-win-core-path-l1-1-0.dll", NULL,
+                                            LOAD_LIBRARY_SEARCH_SYSTEM32);
+            if (pathapi) {
+                _PathCchCombineEx = (PPathCchCombineEx)GetProcAddress(pathapi, "PathCchCombineEx");
+            }
         }
         _PathCchCombineEx_Initialized = 1;
     }
@@ -288,12 +291,15 @@ canonicalize(wchar_t *buffer, const wchar_t *path)
     }
 
     if (_PathCchCanonicalizeEx_Initialized == 0) {
-        HMODULE pathapi = LoadLibraryW(L"api-ms-win-core-path-l1-1-0.dll");
-        if (pathapi) {
-            _PathCchCanonicalizeEx = (PPathCchCanonicalizeEx)GetProcAddress(pathapi, "PathCchCanonicalizeEx");
-        }
-        else {
-            _PathCchCanonicalizeEx = NULL;
+        _PathCchCanonicalizeEx = NULL;
+        if (GetProcAddress(GetModuleHandleW(L"kernel32.dll"), "AddDllDirectory") != NULL) {
+            /* Check that we can use the LOAD_LIBRARY_SEARCH_SYSTEM32 flag below by ensuring
+               the AddDllDirectory method exists first */
+            HMODULE pathapi = LoadLibraryExW(L"api-ms-win-core-path-l1-1-0.dll", NULL,
+                                            LOAD_LIBRARY_SEARCH_SYSTEM32);
+            if (pathapi) {
+                _PathCchCanonicalizeEx = (PPathCchCanonicalizeEx)GetProcAddress(pathapi, "PathCchCanonicalizeEx");
+            }
         }
         _PathCchCanonicalizeEx_Initialized = 1;
     }
