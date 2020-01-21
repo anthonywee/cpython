@@ -231,6 +231,18 @@ ismodule(wchar_t *filename, int update_filename)
     return 0;
 }
 
+static HMODULE
+getpathapi()
+{
+    HMODULE pathapi = NULL;
+    if (GetProcAddress(GetModuleHandleW(L"kernel32.dll"), "AddDllDirectory") != NULL) {
+        /* Check that we can use the LOAD_LIBRARY_SEARCH_SYSTEM32 flag below by ensuring
+            the AddDllDirectory method exists first */
+        HMODULE pathapi = LoadLibraryExW(L"api-ms-win-core-path-l1-1-0.dll", NULL,
+                                        LOAD_LIBRARY_SEARCH_SYSTEM32);
+    }
+    return pathapi;
+}
 
 /* Add a path component, by appending stuff to buffer.
    buffer must have at least MAXPATHLEN + 1 bytes allocated, and contain a
@@ -253,14 +265,8 @@ join(wchar_t *buffer, const wchar_t *stuff)
 {
     if (_PathCchCombineEx_Initialized == 0) {
         _PathCchCombineEx = NULL;
-        if (GetProcAddress(GetModuleHandleW(L"kernel32.dll"), "AddDllDirectory") != NULL) {
-            /* Check that we can use the LOAD_LIBRARY_SEARCH_SYSTEM32 flag below by ensuring
-               the AddDllDirectory method exists first */
-            HMODULE pathapi = LoadLibraryExW(L"api-ms-win-core-path-l1-1-0.dll", NULL,
-                                            LOAD_LIBRARY_SEARCH_SYSTEM32);
-            if (pathapi) {
-                _PathCchCombineEx = (PPathCchCombineEx)GetProcAddress(pathapi, "PathCchCombineEx");
-            }
+        if (pathapi = getpathapi()) {
+            _PathCchCombineEx = (PPathCchCombineEx)GetProcAddress(pathapi, "PathCchCombineEx");
         }
         _PathCchCombineEx_Initialized = 1;
     }
@@ -292,14 +298,8 @@ canonicalize(wchar_t *buffer, const wchar_t *path)
 
     if (_PathCchCanonicalizeEx_Initialized == 0) {
         _PathCchCanonicalizeEx = NULL;
-        if (GetProcAddress(GetModuleHandleW(L"kernel32.dll"), "AddDllDirectory") != NULL) {
-            /* Check that we can use the LOAD_LIBRARY_SEARCH_SYSTEM32 flag below by ensuring
-               the AddDllDirectory method exists first */
-            HMODULE pathapi = LoadLibraryExW(L"api-ms-win-core-path-l1-1-0.dll", NULL,
-                                            LOAD_LIBRARY_SEARCH_SYSTEM32);
-            if (pathapi) {
+        if (pathapi = getpathapi()) {
                 _PathCchCanonicalizeEx = (PPathCchCanonicalizeEx)GetProcAddress(pathapi, "PathCchCanonicalizeEx");
-            }
         }
         _PathCchCanonicalizeEx_Initialized = 1;
     }
